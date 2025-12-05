@@ -35,11 +35,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughTimePassed();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
-// Type declarations
- enum RaffleState { OPEN, CALCULATING }
+    // Type declarations
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
 
-
-// state variables 
+    // state variables
     uint256 private immutable I_ENTRANCE_FEE;
     address payable[] private sPlayers;
     uint256 private immutable I_INTERVAL;
@@ -79,11 +81,22 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (msg.value < I_ENTRANCE_FEE) {
             revert Raffle__NotEnoughEthSent();
         }
-        if(sRaffleState != RaffleState.OPEN) {
+        if (sRaffleState != RaffleState.OPEN) {
             revert Raffle__RaffleNotOpen();
         }
         sPlayers.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
+    }
+
+    function checkUpKeep(
+        bytes calldata /*checkdata*/
+    )
+        public
+        view
+        returns (bool upkeepNeeded, bytes memory /*performData */)
+    {
+        // TODO: Implement upkeep check logic
+        upkeepNeeded = false;
     }
 
     // the raffle owner picks a winner randomly
@@ -107,7 +120,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 indexOfWinner = randomWords[0] % sPlayers.length;
         address payable recentWinner = sPlayers[indexOfWinner];
         sRecentWinner = recentWinner;
-        sRaffleState = RaffleState.OPEN
+        sRaffleState = RaffleState.OPEN;
         sPlayers = new address payable[](0);
         sLastTimeStamp = block.timestamp;
 

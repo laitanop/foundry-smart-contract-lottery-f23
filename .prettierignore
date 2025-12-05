@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+lib/
+
+# Build outputs
+out/
+cache/
+
+# Foundry
+foundry.lock
+
+# Other
+*.json
+
