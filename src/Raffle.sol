@@ -79,7 +79,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     }
     // enter a raffle or buy a lotery ticket
 
-    function enterRaffle() public payable {
+    function enterRaffle() external payable {
         if (msg.value < I_ENTRANCE_FEE) {
             revert Raffle__NotEnoughEthSent();
         }
@@ -149,5 +149,9 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     }
     function getRaffleState() public view returns (RaffleState) {
         return sRaffleState;
+    }
+
+    function getPlayer(uint256 index) public view returns (address) {
+        return sPlayers[index];
     }
 }

@@ -12,7 +12,7 @@ contract RaffleTest is Test {
     HelperConfig public helperConfig;
 
     address public PLAYER = makeAddr("player");
-    uint256 public STARTING_USER_BALANCE = 10 ether;
+    uint256 public STARTING_PLAYER_BALANCE = 10 ether;
     uint256 entranceFee;
     uint256 automationUpdateInterval;
     address vrfCoordinatorV2_5;
@@ -30,9 +30,27 @@ contract RaffleTest is Test {
         gasLane = config.gasLane;
         subscriptionId = config.subscriptionId;
         callbackGasLimit = config.callbackGasLimit;
+        vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
     }
 
     function testRaffleInitializesInOpenState() public view {
         assert(raffle.getRaffleState() == Raffle.RaffleState.OPEN);
+    }
+
+    function testRaffleRevertsWhenYoudontPayEnough() public {
+        // Arrange
+        vm.prank(PLAYER);
+        // Act / Assert
+        vm.expectRevert(Raffle.Raffle__NotEnoughEthSent.selector);
+        raffle.enterRaffle();
+    }
+    function testRaffleRecordsPlayerWhenTheyEnter() public {
+        // Arrange
+        vm.prank(PLAYER);
+        // Act
+        raffle.enterRaffle{ value: entranceFee }();
+        // Assert
+        address playerRecorded = raffle.getPlayer(0);
+        assert(playerRecorded == PLAYER);
     }
 }
