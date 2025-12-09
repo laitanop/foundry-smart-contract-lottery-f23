@@ -20,21 +20,23 @@
 // view & pure functions
 
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import { VRFConsumerBaseV2Plus } from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import { VRFV2PlusClient } from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import { AutomationCompatibleInterface } from "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
 // @title A sample Raffle
 // @author laitanop
 // @notice This is a raffle contract
 // @dev This is a raffle contract
 
-contract Raffle is VRFConsumerBaseV2Plus {
+contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     //errors
     error Raffle__NotEnoughEthSent();
     error Raffle__NotEnoughTimePassed();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
+    error Raffle__UpkeepNotNeeded();
     // Type declarations
     enum RaffleState {
         OPEN,
@@ -88,21 +90,31 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEntered(msg.sender);
     }
 
+    /**
+     * @dev This is the function that the Chainlink Keeper nodes call
+     * they look for `upkeepNeeded` to return True.
+     * the following should be true for this to return true:
+     * 1. The time interval has passed between raffle runs.
+     * 2. The lottery is open.
+     * 3. The contract has ETH.
+     * 4. Implicity, your subscription is funded with LINK.
+     */
     function checkUpKeep(
-        bytes calldata /*checkdata*/
-    )
-        public
-        view
-        returns (bool upkeepNeeded, bytes memory /*performData */)
-    {
+        bytes memory /*checkdata*/
+    ) public view returns (bool upkeepNeeded, bytes memory /*performData */) {
         // TODO: Implement upkeep check logic
-        upkeepNeeded = false;
+        bool timeHasPassed = (block.timestamp - sLastTimeStamp) >= I_INTERVAL;
+        bool isOpen = sRaffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance;
+        return (upkeepNeeded, "");
     }
 
     // the raffle owner picks a winner randomly
-    function pickWinner() external {
-        if ((block.timestamp - sLastTimeStamp) < I_INTERVAL) {
-            revert Raffle__NotEnoughTimePassed();
+    function performUpkeep(bytes calldata /* performData */) external override {
+        (bool upkeepNeeded, ) = checkUpKeep("");
+        if (!upkeepNeeded) {
+            revert Raffle__UpkeepNotNeeded();
         }
         sRaffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
@@ -111,7 +123,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             requestConfirmations: REQUEST_CONFIRMATIONS,
             callbackGasLimit: I_CALLBACK_GAS_LIMIT,
             numWords: NUM_WORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({ nativePayment: false }))
         });
         uint256 requestId = s_vrfCoordinator.requestRandomWords(req);
     }
@@ -124,7 +136,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         sPlayers = new address payable[](0);
         sLastTimeStamp = block.timestamp;
 
-        (bool success,) = recentWinner.call{value: address(this).balance}("");
+        (bool success, ) = recentWinner.call{ value: address(this).balance }("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
