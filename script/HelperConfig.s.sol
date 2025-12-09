@@ -122,7 +122,7 @@ contract HelperConfig is CodeConstants, Script {
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
             vrfCoordinatorV2_5: address(vrfCoordinatorV2_5Mock),
-            link: address(link),
+            link: address(0),
             account: FOUNDRY_DEFAULT_SENDER
         });
         vm.deal(localNetworkConfig.account, 100 ether);

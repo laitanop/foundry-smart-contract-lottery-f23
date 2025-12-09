@@ -61,15 +61,15 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     event WinnerPicked(address indexed winner);
 
     constructor(
-        uint256 entranceFee,
-        uint256 inteval,
-        address vrfCoordinator,
-        bytes32 gasLane,
         uint256 subscriptionId,
-        uint32 callbackGasLimit
+        bytes32 gasLane, // keyHash
+        uint256 interval,
+        uint256 entranceFee,
+        uint32 callbackGasLimit,
+        address vrfCoordinator
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         I_ENTRANCE_FEE = entranceFee;
-        I_INTERVAL = inteval;
+        I_INTERVAL = interval;
         I_KEY_HASH = gasLane;
         I_SUBSCRIPTION_ID = subscriptionId;
         I_CALLBACK_GAS_LIMIT = callbackGasLimit;
@@ -99,7 +99,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
      * 3. The contract has ETH.
      * 4. Implicity, your subscription is funded with LINK.
      */
-    function checkUpKeep(
+    function checkUpkeep(
         bytes memory /*checkdata*/
     ) public view returns (bool upkeepNeeded, bytes memory /*performData */) {
         // TODO: Implement upkeep check logic
@@ -112,7 +112,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     // the raffle owner picks a winner randomly
     function performUpkeep(bytes calldata /* performData */) external override {
-        (bool upkeepNeeded, ) = checkUpKeep("");
+        (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
             revert Raffle__UpkeepNotNeeded();
         }
@@ -146,5 +146,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     //getter function
     function getEntranceFee() external view returns (uint256) {
         return I_ENTRANCE_FEE;
+    }
+    function getRaffleState() public view returns (RaffleState) {
+        return sRaffleState;
     }
 }
