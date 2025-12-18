@@ -3,7 +3,7 @@
 // imports
 // errors
 // interfaces, libraries, contracts
-// Type declarations
+// Type declarations -(structs, enums, etc)
 // State variables
 // Events
 // Modifiers
@@ -25,10 +25,13 @@ pragma solidity ^0.8.19;
 import { VRFConsumerBaseV2Plus } from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import { VRFV2PlusClient } from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import { AutomationCompatibleInterface } from "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
-// @title A sample Raffle
-// @author laitanop
-// @notice This is a raffle contract
-// @dev This is a raffle contract
+
+/**
+ * @title A sample Raffle
+ * @author laitanop
+ * @notice This is a raffle contract
+ * @dev This is a raffle contract
+ */
 
 contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     //errors

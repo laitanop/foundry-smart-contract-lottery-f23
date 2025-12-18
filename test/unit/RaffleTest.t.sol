@@ -20,6 +20,9 @@ contract RaffleTest is Test {
     uint256 subscriptionId;
     uint32 callbackGasLimit;
 
+    event RaffleEntered(address indexed player);
+    event WinnerPicked(address indexed winner);
+
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.run();
@@ -52,5 +55,51 @@ contract RaffleTest is Test {
         // Assert
         address playerRecorded = raffle.getPlayer(0);
         assert(playerRecorded == PLAYER);
+    }
+
+    function testEnteringRaffleEmitsEvent() public {
+        // Arrange
+        vm.prank(PLAYER);
+
+        // Act / Assert
+        vm.expectEmit(true, false, false, false, address(raffle));
+        emit RaffleEntered(PLAYER);
+        raffle.enterRaffle{ value: entranceFee }();
+    }
+    function testDontAllowPlayersToEnterWhileRaffleIsCalculating() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{ value: entranceFee }();
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+
+        // Act / Assert
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        vm.prank(PLAYER);
+        raffle.enterRaffle{ value: entranceFee }();
+    }
+    function testCheckUpkeepReturnsFalseIfItHasNoBalance() public {
+        // Arrange
+
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
+        vm.roll(block.number + 1);
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        // Assert
+        assert(!upkeepNeeded);
+    }
+
+    function testCheckUpkeepReturnsFalseIfRaffleIsNotOpen() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{ value: entranceFee }();
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+        // Act
+        (bool upkeepNeeded, ) = raffle.checkUpkeep("");
+        // Assert
+        assert(!upkeepNeeded);
     }
 }
