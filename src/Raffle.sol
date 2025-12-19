@@ -62,6 +62,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     //event
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     constructor(
         uint256 subscriptionId,
@@ -129,9 +130,10 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
             extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({ nativePayment: false }))
         });
         uint256 requestId = s_vrfCoordinator.requestRandomWords(req);
+        emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256, /* requestId */ uint256[] calldata randomWords) internal override {
         uint256 indexOfWinner = randomWords[0] % sPlayers.length;
         address payable recentWinner = sPlayers[indexOfWinner];
         sRecentWinner = recentWinner;
@@ -156,5 +158,12 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     function getPlayer(uint256 index) public view returns (address) {
         return sPlayers[index];
+    }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return sLastTimeStamp;
+    }
+    function getRecentWinner() public view returns (address) {
+        return sRecentWinner;
     }
 }

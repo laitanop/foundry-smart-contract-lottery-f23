@@ -31,8 +31,9 @@ contract HelperConfig is CodeConstants, Script {
         uint256 automationUpdateInterval;
         uint256 raffleEntranceFee;
         uint32 callbackGasLimit;
-        address vrfCoordinatorV2_5;
+        address vrfCoordinatorV25;
         address link;
+        address account;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -60,7 +61,7 @@ contract HelperConfig is CodeConstants, Script {
     }
 
     function getConfigByChainId(uint256 chainId) public returns (NetworkConfig memory) {
-        if (networkConfigs[chainId].vrfCoordinatorV2_5 != address(0)) {
+        if (networkConfigs[chainId].vrfCoordinatorV25 != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAIN_ID) {
             return getOrCreateAnvilEthConfig();
@@ -76,39 +77,41 @@ contract HelperConfig is CodeConstants, Script {
             automationUpdateInterval: 30, // 30 seconds
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
-            vrfCoordinatorV2_5: 0x271682DEB8C4E0901D1a1550aD2e64D568E69909,
-            link: 0x514910771AF9Ca656af840dff83E8264EcF986CA
+            vrfCoordinatorV25: 0x271682DEB8C4E0901D1a1550aD2e64D568E69909,
+            link: 0x514910771AF9Ca656af840dff83E8264EcF986CA,
+            account: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
         });
     }
 
     function getSepoliaEthConfig() public pure returns (NetworkConfig memory sepoliaNetworkConfig) {
         sepoliaNetworkConfig = NetworkConfig({
-            subscriptionId: 0, // If left as 0, our scripts will create one!
+            subscriptionId: 12061406405199117105842229014997435792622212542293771060676433792565038970485,
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             automationUpdateInterval: 30, // 30 seconds
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
-            vrfCoordinatorV2_5: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            vrfCoordinatorV25: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0xfFC1cf460fd4bf677ce22089b600639B28d37Ea5
         });
     }
 
     function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
         // Check to see if we set an active network config
-        if (localNetworkConfig.vrfCoordinatorV2_5 != address(0)) {
+        if (localNetworkConfig.vrfCoordinatorV25 != address(0)) {
             return localNetworkConfig;
         }
 
         console2.log(unicode"⚠️ You have deployed a mock conract!");
         console2.log("Make sure this was intentional");
         vm.startBroadcast();
-        VRFCoordinatorV2_5Mock vrfCoordinatorV2_5Mock = new VRFCoordinatorV2_5Mock(
+        VRFCoordinatorV2_5Mock vrfCoordinatorV25Mock = new VRFCoordinatorV2_5Mock(
             MOCK_BASE_FEE,
             MOCK_GAS_PRICE_LINK,
             MOCK_WEI_PER_UINT_LINK
         );
         LinkToken linkToken = new LinkToken();
-        // uint256 subscriptionId = vrfCoordinatorV2_5Mock.createSubscription();
+        // uint256 subscriptionId = vrfCoordinatorV25Mock.createSubscription();
         vm.stopBroadcast();
 
         localNetworkConfig = NetworkConfig({
@@ -117,8 +120,9 @@ contract HelperConfig is CodeConstants, Script {
             automationUpdateInterval: 30, // 30 seconds
             raffleEntranceFee: 0.01 ether,
             callbackGasLimit: 500000, // 500,000 gas
-            vrfCoordinatorV2_5: address(vrfCoordinatorV2_5Mock),
-            link: address(linkToken)
+            vrfCoordinatorV25: address(vrfCoordinatorV25Mock),
+            link: address(linkToken),
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
         });
 
         return localNetworkConfig;
