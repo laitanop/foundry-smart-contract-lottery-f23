@@ -110,7 +110,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         bool timeHasPassed = (block.timestamp - sLastTimeStamp) >= I_INTERVAL;
         bool isOpen = sRaffleState == RaffleState.OPEN;
         bool hasBalance = address(this).balance > 0;
-        upkeepNeeded = timeHasPassed && isOpen && hasBalance;
+        bool hasPlayers = sPlayers.length >= 5;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
         return (upkeepNeeded, "");
     }
 
@@ -159,11 +160,27 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     function getPlayer(uint256 index) public view returns (address) {
         return sPlayers[index];
     }
+    function getNumberOfPlayers() public view returns (uint256) {
+        return sPlayers.length;
+    }
 
     function getLastTimeStamp() public view returns (uint256) {
         return sLastTimeStamp;
     }
     function getRecentWinner() public view returns (address) {
         return sRecentWinner;
+    }
+    function getAllPlayers() external view returns (address[] memory) {
+        address[] memory players = new address[](sPlayers.length);
+        for (uint256 i = 0; i < sPlayers.length; i++) {
+            players[i] = sPlayers[i];
+        }
+        return players;
+    }
+    function getInterval() external view returns (uint256) {
+        return I_INTERVAL;
+    }
+    function getMinPlayers() external pure returns (uint256) {
+        return 5;
     }
 }
